@@ -1,66 +1,73 @@
 <#
 .SYNOPSIS
-    [INFO] to get the latest help / version of this script use --> get-help .\New-OSDTattoo.ps1 -Online[/INFO]
-	This script will set a tatoo information into an OS image during OSD deployment.
+    To get the latest help / version of this script use --> get-help .\New-OSDTattoo.ps1 -Online
+	This script will set a tattoo information into an OS image during OSD deployment.
     
    
 .DESCRIPTION 
-    This script will tatoo the Windows Image with specefic values into one or all of the following locations:
+    This script will tattoo the Windows Image with specefic values into one or all of the following locations:
 		--> Registry
         --> environment variable
         --> WMI Repository
 
 .PARAMETER ALL
-    This switch will tatoo the values in the following locations:
+    This switch will tattoo the values in the following locations:
         --> Registry
         --> environment variable
         --> WMI Repository
 
 .PARAMETER Registry
-    This switch will tatoo the value only in the following location:
+    This switch will tattoo the value only in the following location:
         --> Registry
 
 .PARAMETER EnvironmentVariable
-    This switch will tatoo the value only in the following location:
+    This switch will tattoo the value only in the following location:
         --> environment variable
 
 .PARAMETER WMI
-    This switch will tatoo the value only in the following location:
+    This switch will tattoo the value only in the following location:
         --> WMI Repository
 
 .PARAMETER Online
     Will redirect you to the web page containing all the latest help, infos, and script updates from the New-OSDTattoo.ps1 script.
+
+.PARAMETER Prefix
+    Selects which Task Sequence Variable prefix is searched.  Defaults to PSDistrict.
+
+.PARAMETER Variables
+    Selects which Task Sequence Variables are added _in addition to_ those found by -Prefix.  Allows fine-grained control.
     
 .Example
-     New-OSDTatoo.ps1 -All
+     New-OSDtattoo.ps1 -All
 
-     Will tatoo all the data in the following locations:
+     Will tattoo all the data in the following locations:
         --> Registry
         --> environment variable
         --> WMI Repository 
 
 .Example
-     New-OSDTatoo.ps1 -WMI -Registry
+     New-OSDtattoo.ps1 -WMI -Registry
 
-     Will tatoo all the data in the following locations:
+     Will tattoo all the data in the following locations:
         --> Registry
         --> WMI Repository 
 
 .Example
-     New-OSDTatoo.ps1 
+     New-OSDtattoo.ps1 
 
-    This is equivalent to -All. It Will tatoo all the data in the following locations:
+    This is equivalent to -All. It Will tattoo all the data in the following locations:
         --> Registry
         --> environment variable
         --> WMI Repository 
 
 .NOTES
-	-Author: Stéphane van Gulick
+	-Author: Stéphane van Gulick, Matt Beamish
 	-Email : 
 	-CreationDate: 12.01.2014
-	-LastModifiedDate: 04.14.2015
-	-Version: 1.4.3
+	-LastModifiedDate: 13/03/2020
+	-Version: 1.4.4
     -History:
+    1.4.4 ; 13/03/2020 ; Added -Prefix and -VariableList to define which variables to be exported.  Changed spelling of tattoo. Adjusted HelpURI to point to Github Readme, which will still point to Stephane's page.
     1.4.3 ; 16/08/2015 ; Added -Online help support Commented OSDBuildversion variable out since it was a custom TS variable. 
     1.4.2 ; 04.14.2015 ; Changed variable name: PSDistrict_TaskSequenceInstallationName --> PSDistrict_TSName
     1.4.2 ; 04.14.2015 ; Changed variable name: PSDistrict_TaskSequenceInstallationID --> PSDistrict_TSID  
@@ -70,24 +77,26 @@
 	
 #>
 [cmdletBinding(
-    HelpURI='http://powershelldistrict.com/osd-tattoo-powershell/'
+    HelpURI='https://github.com/gsgrammar/New-Tattoo'
 )]
 Param(
         [Parameter(Mandatory=$false)][switch]$All,
         [Parameter(Mandatory=$false)][switch]$WMI,
         [Parameter(Mandatory=$false)][switch]$Registry,
         [Parameter(Mandatory=$false)][switch]$EnvironmentVariable,
-        [Parameter(Mandatory=$false)][String]$Root = "OsBuildInfo"
+        [Parameter(Mandatory=$false)][String]$Root = "OsBuildInfo",
+        [Parameter(Mandatory=$false)][String]$Prefix = "PSDistrict",
+        [Parameter(Mandatory=$false)][Array]$Variables = @()
 )
 
 #region helperFunctions
 
-$PSDistrict_TattooScriptVersion = "1.4.3"
+$PSDistrict_TattooScriptVersion = "1.4.4"
 
 Function Set-EnvironmentVariable {
 <#
 .SYNOPSIS
-	Creates a system envirnment variable.
+	Creates a system environment variable.
    
 .DESCRIPTION
 	The system environment variable can contain a value, or if not spécified, it will just be empty.
@@ -175,7 +184,7 @@ Function New-RegistryItem {
 
 
 .PARAMETER RegistryString
-    This parameter will is used in order to give the name to the registry string that is needed to be tatooted and that will contain information that can later be reported on through SCCM.
+    This parameter will is used in order to give the name to the registry string that is needed to be tattooted and that will contain information that can later be reported on through SCCM.
     ex : DisplayName
     ex : InstallDate
     Use the parameter "RegistryValue" to give a value to the "registryString".
@@ -682,41 +691,41 @@ Function New-WMIClassInstance {
 Function New-OSDTattoo{
 <#
 .SYNOPSIS
-	Will tatoo an Image during OSD deployment.
+	Will tattoo an Image during OSD deployment.
    
 .DESCRIPTION 
-    This function will have the possibility to tatoo an information in the Windows image in one (or all) of the following locations:
+    This function will have the possibility to tattoo an information in the Windows image in one (or all) of the following locations:
         --> Registry
         --> Environment variable
         --> WMI Repository
 	
 
 .PARAMETER PropertyName
-    This parameter will be is used in order to give the name of the tatoo.
+    This parameter will be is used in order to give the name of the tattoo.
     ex : DisplayName
     ex : InstallDate
    
 
 .PARAMETER PropertyValue
-    This parameter is used in order to give a value the tatoo.
-    ex : "12/01/2015" for a tatoo name called "InstalledDate".
+    This parameter is used in order to give a value the tattoo.
+    ex : "12/01/2015" for a tattoo name called "InstalledDate".
     
 .PARAMETER ALL
-    This switch will tatoo the value in the following locations:
+    This switch will tattoo the value in the following locations:
         --> Registry
         --> environment variable
         --> WMI Repository
 
 .PARAMETER Registry
-    This switch will tatoo the value only in the following location:
+    This switch will tattoo the value only in the following location:
         --> Registry
 
 .PARAMETER EnvironmentVariable
-    This switch will tatoo the value only in the following location:
+    This switch will tattoo the value only in the following location:
         --> environment variable
 
 .PARAMETER WMI
-    This switch will tatoo the value only in the following location:
+    This switch will tattoo the value only in the following location:
         --> WMI Repository
 
 .PARAMETER RegistryRoot
@@ -923,37 +932,37 @@ if (!(Test-Path $LogFile)){
         New-Variable -Name $CustomVariable -Value $tsenv.value($CustomVariable)
     }
 
-    $VarTatoos = Get-Variable -Name "PSDistrict_*"
+    $Vartattoos = Get-Variable -Name "PSDistrict_*"
     
     
 
-    foreach ($Tatoo in $VarTatoos){
+    foreach ($tattoo in $Vartattoos){
     
         
         switch ($PSBoundParameters.Keys){
             "All"{
-                "Tattooing: $($Tatoo.Name) with value: $($Tatoo.value) --> in WMI, Registry and environment variables." >> $LogFile
-                New-OSDTattoo -Root $Root -PropertyName $($Tatoo.Name) -PropertyValue $($Tatoo.value) -All
+                "Tattooing: $($tattoo.Name) with value: $($tattoo.value) --> in WMI, Registry and environment variables." >> $LogFile
+                New-OSDTattoo -Root $Root -PropertyName $($tattoo.Name) -PropertyValue $($tattoo.value) -All
                 break
             }
             "WMI" {
-                "Tattooing: $($Tatoo.Name) with value: $($Tatoo.value) --> in WMI." >> $LogFile
-                New-OSDTattoo -Root $Root -PropertyName $($Tatoo.Name) -PropertyValue $($Tatoo.value) -wmi
+                "Tattooing: $($tattoo.Name) with value: $($tattoo.value) --> in WMI." >> $LogFile
+                New-OSDTattoo -Root $Root -PropertyName $($tattoo.Name) -PropertyValue $($tattoo.value) -wmi
                 break
             }
             "Registry"{
-                "Tattooing: $($Tatoo.Name) with value: $($Tatoo.value) --> in Registry." >> $LogFile
-                New-OSDTattoo -Root $Root -PropertyName $($Tatoo.Name) -PropertyValue $($Tatoo.value) -Registry
+                "Tattooing: $($tattoo.Name) with value: $($tattoo.value) --> in Registry." >> $LogFile
+                New-OSDTattoo -Root $Root -PropertyName $($tattoo.Name) -PropertyValue $($tattoo.value) -Registry
                 Break
             }
             "EnvironmentVariable"{
-                "Tattooing: $($Tatoo.Name) with value: $($Tatoo.value) --> in environment variables." >> $LogFile
-                New-OSDTattoo -Root $Root -PropertyName $($Tatoo.Name) -PropertyValue $($Tatoo.value) -EnvironmentVariable
+                "Tattooing: $($tattoo.Name) with value: $($tattoo.value) --> in environment variables." >> $LogFile
+                New-OSDTattoo -Root $Root -PropertyName $($tattoo.Name) -PropertyValue $($tattoo.value) -EnvironmentVariable
                 break
             }
             default{
-                "Tattooing: $($Tatoo.Name) with value: $($Tatoo.value) --> in WMI, Registry and environment variables.">> $LogFile
-                New-OSDTattoo -Root $Root -PropertyName $($Tatoo.Name) -PropertyValue $($Tatoo.value) -All
+                "Tattooing: $($tattoo.Name) with value: $($tattoo.value) --> in WMI, Registry and environment variables.">> $LogFile
+                New-OSDTattoo -Root $Root -PropertyName $($tattoo.Name) -PropertyValue $($tattoo.value) -All
                 break
                 
             }
