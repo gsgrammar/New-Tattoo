@@ -77,24 +77,24 @@
 	
 #>
 [cmdletBinding(
-    HelpURI='https://github.com/gsgrammar/New-Tattoo'
+    HelpURI = 'https://github.com/gsgrammar/New-Tattoo'
 )]
 Param(
-        [Parameter(Mandatory=$false)][switch]$All,
-        [Parameter(Mandatory=$false)][switch]$WMI,
-        [Parameter(Mandatory=$false)][switch]$Registry,
-        [Parameter(Mandatory=$false)][switch]$EnvironmentVariable,
-        [Parameter(Mandatory=$false)][String]$Root = "OsBuildInfo",
-        [Parameter(Mandatory=$false)][String]$Prefix = "PSDistrict",
-        [Parameter(Mandatory=$false)][Array]$Variables = @()
+    [Parameter(Mandatory = $false)][switch]$All,
+    [Parameter(Mandatory = $false)][switch]$WMI,
+    [Parameter(Mandatory = $false)][switch]$Registry,
+    [Parameter(Mandatory = $false)][switch]$EnvironmentVariable,
+    [Parameter(Mandatory = $false)][String]$Root = "OsBuildInfo",
+    [Parameter(Mandatory = $false)][String]$Prefix = "PSDistrict",
+    [Parameter(Mandatory = $false)][Array]$Variables = @()
 )
 
 #region helperFunctions
 
-$PSDistrict_TattooScriptVersion = "1.4.4"
+$TattooScriptVersion = "1.4.4"
 
 Function Set-EnvironmentVariable {
-<#
+    <#
 .SYNOPSIS
 	Creates a system environment variable.
    
@@ -116,68 +116,54 @@ Creates a variable called "plop" whit a value of "1234"
 
     [Cmdletbinding()]
     Param(
-
-        [Parameter(Mandatory=$true)][string[]]$Name,
-        [Parameter(Mandatory=$false)]$Value = $null,
-        [Parameter(Mandatory=$false)][Switch]$Force
-
-
+        [Parameter(Mandatory = $true)][string[]]$Name,
+        [Parameter(Mandatory = $false)]$Value = $null,
+        [Parameter(Mandatory = $false)][Switch]$Force
     )
-        
-        Begin{
-        
-            
+    Begin { 
 
+    }
+    Process {   
+        #Verifying if variable exists
+        if ($env:name) {
+            #Variable is existing
+
+            if ($force) {
+                #Forcing to change the variable
+
+                write-verbose "Variable $($name)is already existing. Forcing new value $($value)."
+                try {
+                    [Environment]::SetEnvironmentVariable($($name), $($value), "Machine")
+                }
+                catch {
+                    write-warning $_
+                }
+            }
+            else {
+                write-warning "Variable $($name) is already existing. If you still want to force the new variable setting call this function whit parameter -force"
+            }
         }
-        Process{
-        
-                #Verifying if variable exists
-                    if ($env:name){
-                            #Variable is existing
-
-                            if ($force){
-                                #Forcing to change the variable
-
-                                write-verbose "Variable $($name)is already existing. Forcing new value $($value)."
-                                try{
-                                    [Environment]::SetEnvironmentVariable($($name), $($value), "Machine")
-                                    }
-                                catch{
-                                    write-warning $_
-                                }
-
-                    
-                            }
-                            else{
-                
-                                write-warning "Variable $($name) is already existing. If you still want to force the new variable setting call this function whit parameter -force"
-
-                            }
-                        }
-                    else{
-                #Variable is not existing
-                        [Environment]::SetEnvironmentVariable($($name), $($value), "Machine")
-                        write-verbose "New environment variable $($name) has been created whit value $($value)"
-                    }
-                      
-
+        else {
+            #Variable is not existing
+            [Environment]::SetEnvironmentVariable($($name), $($value), "Machine")
+            write-verbose "New environment variable $($name) has been created whit value $($value)"
         }
-        End{}
-
+    }
+    End { }
 }
 
 Function New-RegistryItem {
-<#
+    <#
 .SYNOPSIS
-	Set's a registry item.
+	Sets a registry item.
    
 .DESCRIPTION 
-    Set's a registry item in a specefic hvye.
+    Sets a registry item in a specific hive.
 	
 	
 .PARAMETER RegistryPath
-    Specefiy the registry path.
-    Default it is in HKLM:SOFTWARE\Company\ hyve.
+    Specify the registry path.
+    Default is in HKLM:SOFTWARE\Company\ hive.
     /!\Important note /!\
     Powershell requires that the following registry format is respected :
     "HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\" <-- the "HKLM:" is important and CANNOT be "HKEY_LOCAL_MACHINE" (notice the ':' also!!).
@@ -209,79 +195,69 @@ Function New-RegistryItem {
 
     [cmdletBinding()]
     Param(
-
-
-        [Parameter(Mandatory=$false)]
-        [string]$RegistryPath = "HKLM:SOFTWARE\",
-
-        [Parameter(Mandatory=$true)]
-        [string]$RegistryString,
-
-        [Parameter(Mandatory=$true)]
-        [string]$RegistryValue
-        
+        [Parameter(Mandatory = $false)][string]$RegistryPath = "HKLM:SOFTWARE\",
+        [Parameter(Mandatory = $true)][string]$RegistryString,
+        [Parameter(Mandatory = $true)][string]$RegistryValue
     )
-    begin{
+    begin {
 
     }
-    Process{
-    
-            ##Creating the registry node
-            if (!(test-path $RegistryPath)){
-                write-verbose "Creating the registry node at : $($RegistryPath)."
-                try{
-                    if ($RegistryPath -ne "HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\"){
-                        New-Item -Path $RegistryPath -force -ErrorAction stop | Out-Null
-                       }else{
-                        write-verbose "The registry path that is tried to be created is the uninstall string.HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\."
-                        write-verbose "Creating this here would have as consequence to erase the whole content of the Uninstall registry hive."
-                        
-                        exit 
-                       }
-                    }
-                catch [System.Security.SecurityException] {
-                    write-warning "No access to the registry. Please launch this function with elevated privileges."
+    Process {
+        ##Creating the registry node
+        if (!(test-path $RegistryPath)) {
+            write-verbose "Creating the registry node at : $($RegistryPath)."
+            try {
+                if ($RegistryPath -ne "HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\") {
+                    New-Item -Path $RegistryPath -force -ErrorAction stop | Out-Null
                 }
-                catch{
-                    write-host "An unknowed error occured : $_ "
+                else {
+                    write-verbose "The registry path that was to be created is the uninstall string. HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\."
+                    write-verbose "Creating this would erase the whole content of the Uninstall registry hive."
+                    exit 
                 }
             }
-            else{
-                write-verbose "The registry hyve already exists at $($registrypath)"
+            catch [System.Security.SecurityException] {
+                write-warning "No access to the registry. Please launch this function with elevated privileges."
             }
+            catch {
+                write-host "An unknown error occured : $_ "
+            }
+        }
+        else {
+            write-verbose "The registry hive already exists at $($registrypath)"
+        }
 
-            ##Creating the registry string and setting its value
-            if ($RegistryPath -ne "HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\")
-                {
-                         write-verbose "Setting the registry string $($RegistryString) with value $($registryvalue) at path : $($registrypath) ."
+        ##Creating the registry string and setting its value
+        if ($RegistryPath -ne "HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\") {
+            write-verbose "Setting the registry string $($RegistryString) with value $($registryvalue) at path : $($registrypath) ."
 
-                        try{
+            try {
                            
-                            New-ItemProperty -Path $RegistryPath  -Name $RegistryString -PropertyType STRING -Value $RegistryValue -Force -ErrorAction Stop | Out-Null
-                            }
-                        catch [System.Security.SecurityException] {
-                            write-host "No access to the registry. Please launch this function with elevated privileges."
-                        }
-                        catch{
-                            write-host "An uncatched error occured : $_ "
-                        }
-                       }
-            else{
-                write-verbose "The registry path that is tried to be created is the uninstall string. HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\."
-                write-verbose "Creating this here would have as consequence to erase the whole content of the Uninstall registry hive."
-                exit
+                New-ItemProperty -Path $RegistryPath  -Name $RegistryString -PropertyType STRING -Value $RegistryValue -Force -ErrorAction Stop | Out-Null
             }
+            catch [System.Security.SecurityException] {
+                write-host "No access to the registry. Please launch this function with elevated privileges."
+            }
+            catch {
+                write-host "An uncaught error occured : $_ "
+            }
+        }
+        else {
+            write-verbose "The registry path that was to be created is the uninstall string. HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\."
+            write-verbose "Creating this would erase the whole content of the Uninstall registry hive."
+            exit
+        }
 
                
             
             
-        }
+    }
 
-    End{}
+    End { }
 }
 
-Function Get-WMIClass{
-  <#
+Function Get-WMIClass {
+    <#
 	.SYNOPSIS
 		get information about a specefic WMI class.
 
@@ -327,23 +303,24 @@ Function Get-WMIClass{
 		http://social.technet.microsoft.com/profile/st%C3%A9phane%20vg/
 
 #>
-[CmdletBinding()]
-	Param(
-		[Parameter(Mandatory=$false,valueFromPipeLine=$true)][string]$ClassName,
-        [Parameter(Mandatory=$false)][string]$NameSpace = "root\cimv2"
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $false, valueFromPipeLine = $true)][string]$ClassName,
+        [Parameter(Mandatory = $false)][string]$NameSpace = "root\cimv2"
 	
-	)  
-    begin{
-    write-verbose "Getting WMI class $($Classname)"
+    )  
+    begin {
+        write-verbose "Getting WMI class $($Classname)"
     }
-    Process{
-        if (!($ClassName)){
+    Process {
+        if (!($ClassName)) {
             $return = Get-WmiObject -Namespace $NameSpace -Class * -list
-        }else{
+        }
+        else {
             $return = Get-WmiObject -Namespace $NameSpace -Class $ClassName -list
         }
     }
-    end{
+    end {
 
         return $return
     }
@@ -351,7 +328,7 @@ Function Get-WMIClass{
 }
 
 Function New-WMIClass {
-<#
+    <#
 	.SYNOPSIS
 		This function help to create a new WMI class.
 
@@ -386,36 +363,30 @@ Function New-WMIClass {
 		http://social.technet.microsoft.com/profile/st%C3%A9phane%20vg/
 
 #>
-[CmdletBinding()]
-	Param(
-		[Parameter(Mandatory=$true,valueFromPipeLine=$true)][string[]]$ClassName,
-        [Parameter(Mandatory=$false)][string]$NameSpace = "root\cimv2"
-	
-	)
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true, valueFromPipeLine = $true)][string[]]$ClassName,
+        [Parameter(Mandatory = $false)][string]$NameSpace = "root\cimv2"
+    )
 
-
-        
-        
-
-        foreach ($NewClass in $ClassName){
-            if (!(Get-WMIClass -ClassName $NewClass -NameSpace $NameSpace)){
-                write-verbose "Attempting to create class $($NewClass)"
-                    $WMI_Class = ""
-                    $WMI_Class = New-Object System.Management.ManagementClass($NameSpace, $null, $null)
-                    $WMI_Class.name = $NewClass
-	                $WMI_Class.Put() | out-null
+    foreach ($NewClass in $ClassName) {
+        if (!(Get-WMIClass -ClassName $NewClass -NameSpace $NameSpace)) {
+            write-verbose "Attempting to create class $($NewClass)"
+            $WMI_Class = ""
+            $WMI_Class = New-Object System.Management.ManagementClass($NameSpace, $null, $null)
+            $WMI_Class.name = $NewClass
+            $WMI_Class.Put() | out-null
                 
-                write-output "Class $($NewClass) created."
-
-            }else{
-                write-output "Class $($NewClass) is already present. Skiping.."
-            }
+            write-output "Class $($NewClass) created."
         }
-
+        else {
+            write-output "Class $($NewClass) is already present."
+        }
+    }
 }
 					
 Function New-WMIProperty {
-<#
+    <#
 	.SYNOPSIS
 		This function help to create new WMI properties.
 
@@ -449,47 +420,38 @@ Function New-WMIProperty {
 
 #>
 
-
-[CmdletBinding()]
-	Param(
-		[Parameter(Mandatory=$true)]
-        [ValidateScript({
-            $_ -ne ""
-        })]
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [ValidateScript( {
+                $_ -ne ""
+            })]
         [string]$ClassName,
 
-        [Parameter(Mandatory=$false)]
-        [string]$NameSpace="Root\cimv2",
+        [Parameter(Mandatory = $false)][string]$NameSpace = "Root\cimv2",
 
-        [Parameter(Mandatory=$true)][string[]]$PropertyName,
-        [Parameter(Mandatory=$false)][string]$PropertyValue=""
+        [Parameter(Mandatory = $true)][string[]]$PropertyName,
+        [Parameter(Mandatory = $false)][string]$PropertyValue = ""
 
 	
-	)
-    begin{
+    )
+    begin {
         [wmiclass]$WMI_Class = Get-WmiObject -Class $ClassName -Namespace $NameSpace -list
     }
-    Process{
-            write-verbose "Attempting to create property $($PropertyName) with value: $($PropertyValue) in class: $($ClassName)"
-            $WMI_Class.Properties.add($PropertyName,$PropertyValue) | Out-Null
-            Write-verbose "Added $($PropertyName) with to $($PropertyValue) in class: $($ClassName)."
+    Process {
+        write-verbose "Attempting to create property $($PropertyName) with value: $($PropertyValue) in class: $($ClassName)"
+        $WMI_Class.Properties.add($PropertyName, $PropertyValue) | Out-Null
+        Write-verbose "Added $($PropertyName) with to $($PropertyValue) in class: $($ClassName)."
     }
-    end{
-           		$WMI_Class.Put() | Out-Null
-                [wmiclass]$WMI_Class = Get-WmiObject -Class $ClassName -list
-                return $WMI_Class
+    end {
+        $WMI_Class.Put() | Out-Null
+        [wmiclass]$WMI_Class = Get-WmiObject -Class $ClassName -list
+        return $WMI_Class
     }
-
-            
-            
-  
-                    
-
-
 }
 
 Function Set-WMIPropertyQualifier {
-<#
+    <#
 	.SYNOPSIS
 		This function sets a WMI property qualifier value.
 
@@ -512,9 +474,6 @@ Function Set-WMIPropertyQualifier {
 		Set-WMIPropertyQualifier -ClassName "PowerShellDistrict" -PropertyName "WebSite" -QualifierName Key -QualifierValue $true
         Sets the propertyQualifier "Key" on the property "WebSite"
     
-		
-
-
 	.NOTES
 		Version: 1.1
         Author: Stephane van Gulick
@@ -526,71 +485,61 @@ Function Set-WMIPropertyQualifier {
 
 	.LINK
 		http://social.technet.microsoft.com/profile/st%C3%A9phane%20vg/
-
 #>
 
-
-[CmdletBinding()]
-	Param(
-		[Parameter(Mandatory=$true)]
-        [ValidateScript({
-            $_ -ne ""
-        })]
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [ValidateScript( {
+                $_ -ne ""
+            })]
         [string]$ClassName,
 
-        [Parameter(Mandatory=$false)]
-        [string]$NameSpace="Root\cimv2",
+        [Parameter(Mandatory = $false)][string]$NameSpace = "Root\cimv2",
 
-        [Parameter(Mandatory=$true)]
-        [ValidateScript({
-            $_ -ne ""
-        })]
+        [Parameter(Mandatory = $true)]
+        [ValidateScript( {
+                $_ -ne ""
+            })]
         [string]$PropertyName,
 
-        [Parameter(Mandatory=$false)]
-        $QualifierName,
+        [Parameter(Mandatory = $false)]$QualifierName,
 
-        [Parameter(Mandatory=$false)]
-        $QualifierValue,
+        [Parameter(Mandatory = $false)]$QualifierValue,
 
         [switch]$key,
-        [switch]$IsAmended=$false,
-        [switch]$IsLocal=$true,
-        [switch]$PropagatesToInstance=$true,
-        [switch]$PropagesToSubClass=$false,
-        [switch]$IsOverridable=$true
+        [switch]$IsAmended = $false,
+        [switch]$IsLocal = $true,
+        [switch]$PropagatesToInstance = $true,
+        [switch]$PropagesToSubClass = $false,
+        [switch]$IsOverridable = $true
 
 	
-	)
-
+    )
     
     write-verbose "Setting  qualifier $($QualifierName) with value $($QualifierValue) on property $($propertyName) located in $($ClassName) in Namespace $($NameSpace)"
     $Class = Get-WMIClass -ClassName $ClassName -NameSpace $NameSpace
 
-    if ($Class.Properties[$PropertyName]){
+    if ($Class.Properties[$PropertyName]) {
 
         write-verbose "Property $($PropertyName) has been found."
-        if ($Key){
+        if ($Key) {
             write-verbose "Setting Key property on $($PropertyName)"
-            $Class.Properties[$PropertyName].Qualifiers.Add("Key",$true)
+            $Class.Properties[$PropertyName].Qualifiers.Add("Key", $true)
             $Class.put() | out-null
-        
-        
-        }else{
+        }
+        else {
             write-verbose "Setting $($QualifierName) with qualifier value $($QualifierValue) on property $($PropertyName)"
-            $Class.Properties[$PropertyName].Qualifiers.add($QualifierName,$QualifierValue, $IsAmended,$IsLocal,$PropagatesToInstance,$PropagesToSubClass)
+            $Class.Properties[$PropertyName].Qualifiers.add($QualifierName, $QualifierValue, $IsAmended, $IsLocal, $PropagatesToInstance, $PropagesToSubClass)
             $Class.put() | out-null
         }
 
         $return = Get-WMIProperty -NameSpace $Namespace -ClassName $ClassName -PropertyName $PropertyName
         return $return
-
-    }else{
+    }
+    else {
         write-warning "Could not find any propertyname named $($PropertyName)."
     }
-    
-
-
 }
 
 Function New-WMIClassInstance {
@@ -642,54 +591,51 @@ Function New-WMIClassInstance {
         My other projects and contributions.
 
 #>
-
-
-[CmdletBinding()]
-	Param(
-		[Parameter(Mandatory=$true)]
-        [ValidateScript({
-            $_ -ne ""
-        })]
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [ValidateScript( {
+                $_ -ne ""
+            })]
         [string]$ClassName,
 
-        [Parameter(Mandatory=$false)]
-        [string]$NameSpace="Root\cimv2",
+        [Parameter(Mandatory = $false)]
+        [string]$NameSpace = "Root\cimv2",
 
-        [Parameter(Mandatory=$false)]
-        [ValidateScript({
-            $_ -ne ""
-        })]
+        [Parameter(Mandatory = $false)]
+        [ValidateScript( {
+                $_ -ne ""
+            })]
         [string[]]$InstanceName,
 
-        [Parameter(valueFromPipeLine=$true)]$PutInstance
+        [Parameter(valueFromPipeLine = $true)]$PutInstance
 
-
-	
-	)
-    Begin{
-            $WmiClass = Get-WMIClass -NameSpace $NameSpace -ClassName $ClassName
+    )
+    Begin {
+        $WmiClass = Get-WMIClass -NameSpace $NameSpace -ClassName $ClassName
     }
-    Process{
+    Process {
             
-            if ($PutInstance){
+        if ($PutInstance) {
                 
-                $PutInstance.Put()
-            }else{
-                $Return = $WmiClass.CreateInstance()
-            }
+            $PutInstance.Put()
+        }
+        else {
+            $Return = $WmiClass.CreateInstance()
+        }
           
     }
-    End{
+    End {
 
-        If ($Return){
+        If ($Return) {
             return $Return
         }
 
     }
 }
 
-Function New-OSDTattoo{
-<#
+Function New-OSDTattoo {
+    <#
 .SYNOPSIS
 	Will tattoo an Image during OSD deployment.
    
@@ -698,7 +644,6 @@ Function New-OSDTattoo{
         --> Registry
         --> Environment variable
         --> WMI Repository
-	
 
 .PARAMETER PropertyName
     This parameter will be is used in order to give the name of the tattoo.
@@ -754,23 +699,22 @@ Function New-OSDTattoo{
 #>
     [cmdletBinding()]
     Param(
-        [Parameter(Mandatory=$true)]$Root="Woop",
-        [Parameter(Mandatory=$true)]$PropertyName,
-        [Parameter(Mandatory=$true)]$PropertyValue,
-        [Parameter(Mandatory=$false)]$RegistryRoot = "HKLM:\SOFTWARE\",
-        [Parameter(Mandatory=$false)][switch]$All,
-        [Parameter(Mandatory=$false)][switch]$WMI,
-        [Parameter(Mandatory=$false)][switch]$Registry,
-        [Parameter(Mandatory=$false)][switch]$EnvironmentVariable
+        [Parameter(Mandatory = $true)]$Root,
+        [Parameter(Mandatory = $true)]$PropertyName,
+        [Parameter(Mandatory = $true)]$PropertyValue,
+        [Parameter(Mandatory = $false)]$RegistryRoot = "HKLM:\SOFTWARE\",
+        [Parameter(Mandatory = $false)][switch]$All,
+        [Parameter(Mandatory = $false)][switch]$WMI,
+        [Parameter(Mandatory = $false)][switch]$Registry,
+        [Parameter(Mandatory = $false)][switch]$EnvironmentVariable
     )
-    begin{}
-    Process{
+    begin { }
+    Process {
 
-    
         $FullRegPath = join-path -Path $RegistryRoot -ChildPath $Root
 
-        switch ($PSBoundParameters.Keys){
-            "All"{
+        switch ($PSBoundParameters.Keys) {
+            "All" {
                 New-WMIClass -ClassName $Root
                 New-WMIProperty -ClassName $Root -PropertyName $PropertyName -PropertyValue $PropertyValue
                 New-RegistryItem -RegistryPath $FullRegPath -RegistryString $PropertyName -RegistryValue $PropertyValue
@@ -783,16 +727,15 @@ Function New-OSDTattoo{
                 
                 Break
             }
-            "Registry"{
+            "Registry" {
                 New-RegistryItem -RegistryPath $FullRegPath -RegistryString $PropertyName -RegistryValue $PropertyValue
                 Break
             }
-            "EnvironmentVariable"{
+            "EnvironmentVariable" {
                 Set-EnvironmentVariable -Name $PropertyName -Value $PropertyValue -Force
                 break
             }
-            default{
-            
+            default {
                 New-WMIClass -ClassName $Root
                 New-WMIProperty -ClassName $Root -PropertyName $PropertyName -PropertyValue $PropertyValue
                 New-RegistryItem -RegistryPath $FullRegPath -RegistryString $PropertyName -RegistryValue $PropertyValue
@@ -800,17 +743,13 @@ Function New-OSDTattoo{
                 break
                 
             }
-
         }
-
-
     }
-    End{}
-
+    End { }
 }
 
 Function Get-WMIProperty {
-<#
+    <#
     .SYNOPSIS
         This function gets a WMI property.
  
@@ -850,42 +789,32 @@ http://social.technet.microsoft.com/profile/st%C3%A9phane%20vg/
 #>
  
  
-[CmdletBinding()]
+    [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$true)]
-        [ValidateScript({
-            $_ -ne ""
-        })]
+        [Parameter(Mandatory = $true)]
+        [ValidateScript( {
+                $_ -ne ""
+            })]
         [string]$ClassName,
  
-        [Parameter(Mandatory=$false)]
-        [string]$NameSpace="Root\cimv2",
- 
-        [Parameter(Mandatory=$false)]
-        [string]$PropertyName
- 
-     
- 
-     
-    )
-    begin{
+        [Parameter(Mandatory = $false)][string]$NameSpace = "Root\cimv2",
+        [Parameter(Mandatory = $false)][string]$PropertyName
+     )
+    begin {
           
  
     }
-    process{
-        If ($PropertyName){
+    process {
+        If ($PropertyName) {
             write-verbose "Returning WMI property $($PropertyName) from class $($ClassName) and NameSpace $($NameSpace)."
             $return = (Get-WMIClass -ClassName $ClassName -NameSpace $NameSpace ).properties["$($PropertyName)"]
- 
- 
-         }else{
+        }
+        else {
             write-verbose "Returning list of WMI properties from class $($ClassName) and NameSpace $($NameSpace)."
             $return = (Get-WMIClass -ClassName $ClassName -NameSpace $NameSpace ).properties
- 
-             
-         } 
+        } 
     }
-    end{
+    end {
         Return $return
     }  
 }
@@ -898,89 +827,81 @@ http://social.technet.microsoft.com/profile/st%C3%A9phane%20vg/
 
 #Loading task sequence COM object
 
-$LogFile = "C:\System\logs\OSD_Tattoo.log"
-if (!(Test-Path $LogFile)){
+$LogFile = "${env:systemroot}\logs\OSD\OSD_Tattoo.log"  # MB_13MAR2020: Adjusted to central log location on windows and used environmental variable to locate
+if (!(Test-Path $LogFile)) {
     #Creating log file
     New-Item -Path $LogFile -ItemType file -Force
 }
 
-"Starting operations" >> $LogFile
+"Starting operations" | out-file -filepath $LogFile -append  # MB_13MAR2020: avoiding shorthand
 
-    $tsenv = New-Object -COMObject Microsoft.SMS.TSEnvironment
-    
-
- "Script version is $($PSDistrict_TattooScriptVersion)">> $LogFile    
-
-    $PSDistrict_TSName = $tsenv.Value("_SMSTSPackageName")
-    $PSDistrict_BootImageVersion = $tsenv.Value("_SMSTSBootImageID")
-    $PSDistrict_DeploymentID = $tsenv.Value("_SMSTSPackageID")
-    $PSDistrict_InstallationMethod = $tsenv.Value("_SMSTSMediaType")
-    $PSDistrict_TSID = $tsenv.Value("_SMSTSPackageID")
-    $PSDistrict_SiteCode = $tsenv.Value("_SMSTSSiteCode")
-    #$PSDistrict_OsBuildversion = $tsenv.Value("OsBuildVersion")
-
-    
-    $PSDistrict_InstallationDate = get-date -uformat "%Y%m%d-%T"
-
-    $CustomVariables = @()
-    $CustomVariables = $tsenv.getVariables() | ? {$_ -match "PSDistrict_*"}
-
-    
-
-    Foreach ($CustomVariable in $CustomVariables){
-        
-        New-Variable -Name $CustomVariable -Value $tsenv.value($CustomVariable)
+try {
+    $tsenv = New-Object -COMObject Microsoft.SMS.TSEnvironment    # MB_13MAR2020: Sanity check
+} catch  {
+    if (-not $tsenv) {
+        write-error "Couldn't load TSEnvironment.  Are you in a Task Sequence?"; 
+        break;
     }
+}
 
-    $Vartattoos = Get-Variable -Name "PSDistrict_*"
-    
-    
+"Script version is $TattooScriptVersion" | out-file -filepath $LogFile -append
 
-    foreach ($tattoo in $Vartattoos){
-    
+$CollectedVariables = @{};
+
+$CollectedVariables["TSName"] = $tsenv.Value("_SMSTSPackageName")
+$CollectedVariables["BootImageVersion"] = $tsenv.Value("_SMSTSBootImageID")
+$CollectedVariables["DeploymentID"] = $tsenv.Value("_SMSTSPackageID")
+$CollectedVariables["InstallationMethod"] = $tsenv.Value("_SMSTSMediaType")
+$CollectedVariables["TSID"] = $tsenv.Value("_SMSTSPackageID")
+$CollectedVariables["SiteCode"] = $tsenv.Value("_SMSTSSiteCode")
+$CollectedVariables["InstallationDate"] = get-date -uformat "%Y%m%d-%T"
+
+$ExtraVariables = $tsenv.getVariables() | where-object { $_ -match "^$Prefix" -or $_ -in $Variables }
+foreach ($ExtraVariable in $ExtraVariables) {
+    $CollectedVariables.Add($ExtraVariable, $tsenv.value($ExtraVariable))
+}
+
+foreach ($key in $CollectedVariables.Keys) {
+    $value = $CollectedVariables[$key];
         
-        switch ($PSBoundParameters.Keys){
-            "All"{
-                "Tattooing: $($tattoo.Name) with value: $($tattoo.value) --> in WMI, Registry and environment variables." >> $LogFile
-                New-OSDTattoo -Root $Root -PropertyName $($tattoo.Name) -PropertyValue $($tattoo.value) -All
-                break
-            }
-            "WMI" {
-                "Tattooing: $($tattoo.Name) with value: $($tattoo.value) --> in WMI." >> $LogFile
-                New-OSDTattoo -Root $Root -PropertyName $($tattoo.Name) -PropertyValue $($tattoo.value) -wmi
-                break
-            }
-            "Registry"{
-                "Tattooing: $($tattoo.Name) with value: $($tattoo.value) --> in Registry." >> $LogFile
-                New-OSDTattoo -Root $Root -PropertyName $($tattoo.Name) -PropertyValue $($tattoo.value) -Registry
-                Break
-            }
-            "EnvironmentVariable"{
-                "Tattooing: $($tattoo.Name) with value: $($tattoo.value) --> in environment variables." >> $LogFile
-                New-OSDTattoo -Root $Root -PropertyName $($tattoo.Name) -PropertyValue $($tattoo.value) -EnvironmentVariable
-                break
-            }
-            default{
-                "Tattooing: $($tattoo.Name) with value: $($tattoo.value) --> in WMI, Registry and environment variables.">> $LogFile
-                New-OSDTattoo -Root $Root -PropertyName $($tattoo.Name) -PropertyValue $($tattoo.value) -All
-                break
-                
-            }
-
-        }#End switch
-
-        
-    }#End foreach.
-
-    
-    if ($PSBoundParameters.ContainsKey("WMI") -or $PSBoundParameters.ContainsKey("All")){
-        #Creating WMI instance
-                "Creating WMI instance.">> $LogFile
-                Set-WMIPropertyQualifier -className $Root -PropertyName "PSDistrict_TattooScriptVersion" -key
-                $Instance = New-WMIClassInstance -ClassName $Root
-                $Instance.put() | out-null
+    switch ($PSBoundParameters.Keys) {
+        "All" {
+            "Tattooing: $key with value: $value --> in WMI, Registry and environment variables." >> $LogFile
+            New-OSDTattoo -Root $Root -PropertyName $key -PropertyValue $value -All
+            break
         }
-    "End of script...">> $LogFile
-    "For more information or detailed help please visit: http://powershelldistrict.com/osd-tattoo-powershell/" >> $logfile
-    #endregion
+        "WMI" {
+            "Tattooing: $key with value: $value --> in WMI." >> $LogFile
+            New-OSDTattoo -Root $Root -PropertyName $key -PropertyValue $value -wmi
+            break
+        }
+        "Registry" {
+            "Tattooing: $key with value: $value --> in Registry." >> $LogFile
+            New-OSDTattoo -Root $Root -PropertyName $key -PropertyValue $value -Registry
+            Break
+        }
+        "EnvironmentVariable" {
+            "Tattooing: $key with value: $value --> in environment variables." >> $LogFile
+            New-OSDTattoo -Root $Root -PropertyName $key -PropertyValue $value -EnvironmentVariable
+            break
+        }
+        default {
+            "Tattooing: $key with value: $value --> in WMI, Registry and environment variables." | out-file -append -filepath $LogFile
+            New-OSDTattoo -Root $Root -PropertyName $key -PropertyValue $value -All
+            break
+        }
+    }#End switch
+}#End foreach.
+
+    
+if ($PSBoundParameters.ContainsKey("WMI") -or $PSBoundParameters.ContainsKey("All")) {
+    #Creating WMI instance
+    "Creating WMI instance." | out-file -append -filepath $LogFile
+    Set-WMIPropertyQualifier -className $Root -PropertyName $TattooScriptVersion -key
+    $Instance = New-WMIClassInstance -ClassName $Root
+    $Instance.put() | out-null
+}
+"End of script..." | out-file -append -filepath $LogFile
+"For more information or detailed help please visit: https://github.com/gsgrammar/New-Tattoo" | out-file -append -filepath $LogFile
+#endregion
 
