@@ -11,27 +11,34 @@ Information on how to use the original script can be found here --> [PowerShellD
 ```
 
 ## PARAMETERS
-**-WMI** <SwitchParameter>
+**-WMI** \<SwitchParameter\>
+
 Creates and populates a WMI Class with the collected information.  Creates a WMI Class `root\wimv2\[$root]`.  If $root is undefined, defaults to OSDBuildInfo, eg:
 > root\wimv2\OSDBuildInfo
 
-**-Registry** <SwitchParameter>
+**-Registry** \<SwitchParameter\>
+
 Creates and populates a Registry key with the collected information.  Creates a Registry key `HKLM:\Software\[$root]`.  If $root is undefined, defaults to OSDBuildInfo, eg:
 > HKLM:\Software\OSDBuildInfo
 
-**-EnvironmentVariable** <SwitchParameter>
+**-EnvironmentVariable** \<SwitchParameter\>
+
 Creates and populates system environment variables with the collected information.  Creates system-level Environment variables, one for each collected Task Sequence variable.  Ignores $root.
 
-**-All** <SwitchParameter>
+**-All** \<SwitchParameter\>
+
 Shorthand for `-WMI` `-Registry` `-Environmentvariable`, ie: will create all three tattoo types.
 
-**-Root** <String>
+**-Root** \<String\>
+
 Specifies the $root variable to be used for the `-WMI` and `-Registry` options.  Default value: `OSBuildInfo`.
 
-**-Prefix** <String>
+**-Prefix** \<String\>
+
 Specifies the prefix which will be used to select Task Sequence variables for collection.  For example, `-prefix "Foo"` will match (and return) the variables `Foo_OSDVariable` and `FooOSDVariable` but not `Bar_OSDVariable`.  Default value: `PSDistrict`
 
-**-Variables** <String[]>
+**-Variables** \<String[]\>
+
 Defines extra variables which will be matched along with those found by `-prefix`.  For example, `-prefix "Foo" -variables @("Bar_OSDVariable")` would match (and return) the variables `Foo_OSDVariable` and `FooOSDVariable` as well as `Bar_OSDVariable`.  Default value: empty.
 
 
