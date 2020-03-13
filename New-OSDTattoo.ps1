@@ -131,7 +131,7 @@ Creates a variable called "plop" whit a value of "1234"
             if ($force) {
                 #Forcing to change the variable
 
-                write-verbose "Variable $($name)is already existing. Forcing new value $($value)."
+                write-verbose "Variable $($name) already exists. Forcing new value $($value)."
                 try {
                     [Environment]::SetEnvironmentVariable($($name), $($value), "Machine")
                 }
@@ -140,13 +140,13 @@ Creates a variable called "plop" whit a value of "1234"
                 }
             }
             else {
-                write-warning "Variable $($name) is already existing. If you still want to force the new variable setting call this function whit parameter -force"
+                write-warning "Variable $($name) already exists. If you still want to force the new variable setting call this function with parameter -force"
             }
         }
         else {
             #Variable is not existing
             [Environment]::SetEnvironmentVariable($($name), $($value), "Machine")
-            write-verbose "New environment variable $($name) has been created whit value $($value)"
+            write-verbose "New environment variable $($name) has been created with value $($value)"
         }
     }
     End { }
@@ -892,15 +892,7 @@ foreach ($key in $CollectedVariables.Keys) {
         }
     }#End switch
 }#End foreach.
-
-    
-if ($PSBoundParameters.ContainsKey("WMI") -or $PSBoundParameters.ContainsKey("All")) {
-    #Creating WMI instance
-    "Creating WMI instance." | out-file -append -filepath $LogFile
-    Set-WMIPropertyQualifier -className $Root -PropertyName $TattooScriptVersion -key
-    $Instance = New-WMIClassInstance -ClassName $Root
-    $Instance.put() | out-null
-}
+   
 "End of script..." | out-file -append -filepath $LogFile
 "For more information or detailed help please visit: https://github.com/gsgrammar/New-Tattoo" | out-file -append -filepath $LogFile
 #endregion

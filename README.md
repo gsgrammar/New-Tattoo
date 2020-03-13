@@ -1,5 +1,5 @@
 # New-Tattoo
-Script to collect Task Sequence Variables within an OSD Task Sequence, and tattoo said information into various locations during deployment so that it persists to the deployed machine.  This is a fork of [Stephanevg/New-Tattoo](/Stephanevg/New-Tattoo) intended to resolve some specific issues.  Do not consider this production code, and no warranty is implied.
+Script to collect Task Sequence Variables within an OSD Task Sequence, and tattoo said information into various locations during deployment so that it persists to the deployed machine.  This is a fork of [Stephanevg/New-Tattoo](https://github.com/Stephanevg/New-Tattoo) intended to resolve some specific issues.  Do not consider this production code, and no warranty is implied.
 
 ## Usage
 Information on how to use the original script can be found here --> [PowerShellDistrict/OSDTattoo](http://powershelldistrict.com/osd-tattoo-powershell/)
